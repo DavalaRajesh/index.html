@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VRV Shop</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f2f4f8;
+    }
+    /* Navbar */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #2874f0;
+      padding: 12px 20px;
+      color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .search-box {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+    .search-box input {
+      padding: 10px;
+      border: none;
+      border-radius: 20px;
+      width: 280px;
+      outline: none;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 15px;
+    }
+    .nav-actions button {
+      background: #ff9f00;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .nav-actions button:hover { background: #fb641b; }
+    .categories {
+      display: flex;
+      gap: 20px;
+      margin-left: 20px;
+    }
+    .categories a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    /* Products grid */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
+      gap: 25px;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { 
+      transform: translateY(-5px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+    .card img {
+      width: 100%;
+      height: 200px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .price { font-size: 18px; font-weight: bold; color: #2874f0; }
+    .old-price { text-decoration: line-through; color: gray; margin-left: 10px; }
+    .stock { font-size: 14px; margin-top: 5px; color: #444; }
+    .buy-btn, .cart-btn {
+      background: #ff9f00;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.3s;
+    }
+    .buy-btn:hover, .cart-btn:hover { background: #fb641b; }
+    /* Admin */
+    .admin-panel { display: none; padding: 20px; }
+    .admin-panel input, .admin-panel select { margin: 5px; padding: 8px; border-radius: 5px; border:1px solid #ccc; }
+    /* Cart Slide Panel */
+    .cart-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 350px;
+      height: 100%;
+      background: white;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+      padding: 20px;
+      transition: right 0.4s ease;
+      z-index: 20;
+    }
+    .cart-panel.active { right: 0; }
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    .close-cart {
+      float: right;
+      cursor: pointer;
+      font-size: 18px;
+      color: red;
+    }
+    .checkout-btn {
+      background: #2874f0;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 25px;
+      margin-top: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .checkout-btn:hover { background: #0d47a1; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo">VRV</div>
+    <div class="categories">
+      <a href="#" onclick="filterCategory('all')">All</a>
+      <a href="#" onclick="filterCategory('men')">Men</a>
+      <a href="#" onclick="filterCategory('women')">Women</a>
+      <a href="#" onclick="filterCategory('child')">Child</a>
+      <a href="#" onclick="filterCategory('accessories')">Accessories</a>
+    </div>
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search products..." onkeyup="searchProducts()">
+    </div>
+    <div class="nav-actions">
+      <button onclick="toggleCart()">Cart (<span id="cart-count">0</span>)</button>
+      <button onclick="showAdmin()">Admin</button>
+    </div>
+  </div>
+
+  <!-- Products -->
+  <div class="products" id="product-list"></div>
+
+  <!-- Cart Slide Panel -->
+  <div class="cart-panel" id="cart-panel">
+    <span class="close-cart" onclick="toggleCart()">✖</span>
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <h4>Total: ₹<span id="cart-total">0</span></h4>
+    <button class="checkout-btn" onclick="checkout()">Checkout (COD)</button>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="admin-panel">
+    <h3>Add Product</h3>
+    <input type="text" id="admin-img" placeholder="Image URL">
+    <input type="text" id="admin-name" placeholder="Product Name">
+    <input type="number" id="admin-price" placeholder="Price">
+    <input type="number" id="admin-stock" placeholder="Stock">
+    <select id="admin-cat">
+      <option value="men">Men</option>
+      <option value="women">Women</option>
+      <option value="child">Child</option>
+      <option value="accessories">Accessories</option>
+    </select>
+    <button onclick="addProduct()">Add</button>
+  </div>
+
+<script>
+  let products = [
+    { img: "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSTDCSzeoretdfMi7wMPlwKZpZDJdvFlEstBJmIQ1UOtqUNOBhRT63Flv2FQbEDSvBkV0JYop4lN6-0HnH-J8x8oLD39eD0UOxGLpgilFql", name: "Men's T-Shirt", price: 499, stock: 10, category: "men" },
+    { img: "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQ0quvRAV1dmTwPlea1qWs8No9DgwAQc0aBt2cDU6bfaxss390YkOHBh5rYNa_ekTgsurN-T4NAIgkjJphiOXoHmzOtkRA5MA", name: "Women's Handbag", price: 1299, stock: 5, category: "women" },
+    { img: "https://images.meesho.com/images/products/429457679/hi0it_512.avif?width=512", name: "Kid's Shoes", price: 899, stock: 8, category: "child" },
+    { img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQylBz5trlA4htmAyEfu6JoSnDf9M6C7_2RlQ&s", name: "Smart Watch", price: 1999, stock: 15, category: "accessories" },
+  { img: "https://image.made-in-china.com/2f0j00rOqoksSnpZcH/Brand-New-4G-Smart-Phone-Original-3GB-64GB-6-5inch-Smartphone-Mobile-Phone-Android-9-Fast-Charge-cellular-Mobile-Phone-Low-Price.webp", name: "Smart phone", price: 11999, stock: 13, category: "accessories" },
+{ img: "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRvBWu-hSn_sljKKbl2-ZLH8IkG_4SWeXxrCF69LV9ZzQh4IAbblhxvk0VZ17ocpyPBqnva7pG9R5nKxthO5CjIT0jD82wdlylybiBPlUA", name: "shorts", price: 199, stock: 10, category: "men" },
+];
+
+  let cart = [];
+
+  function getDiscount() {
+    return Math.floor(Math.random() * 71) + 10;
+  }
+
+  function renderProducts(list) {
+    let container = document.getElementById("product-list");
+    container.innerHTML = "";
+    list.forEach((p, index) => {
+      let discount = getDiscount();
+      let newPrice = Math.round(p.price * (1 - discount/100));
+      container.innerHTML += `
+        <div class="card">
+          <img src="${p.img}" alt="${p.name}">
+          <h3>${p.name}</h3>
+          <p class="price">₹${newPrice} <span class="old-price">₹${p.price}</span> (${discount}% off)</p>
+          <p class="stock">${p.stock > 0 ? p.stock+" left" : "Out of stock"}</p>
+          <button class="cart-btn" onclick="addToCart(${index},${newPrice})">Add to Cart</button>
+          <button class="buy-btn" onclick="buyProduct('${p.name}',${newPrice})">Cash on Delivery</button>
+        </div>
+      `;
+    });
+  }
+
+  function searchProducts() {
+    let query = document.getElementById("search").value.toLowerCase();
+    let filtered = products.filter(p => p.name.toLowerCase().includes(query));
+    renderProducts(filtered);
+  }
+
+  function filterCategory(cat) {
+    if(cat==="all") renderProducts(products);
+    else renderProducts(products.filter(p => p.category===cat));
+  }
+
+  function buyProduct(name,price) {
+    let msg = `Hello, I want to buy ${name} for ₹${price} (Cash on Delivery).`;
+    window.open(`https://wa.me/919032302088?text=${encodeURIComponent(msg)}`);
+  }
+
+  // Admin
+  function showAdmin() {
+    let pass = prompt("Enter Admin Username:");
+    let key = prompt("Enter Password:");
+    if(pass==="WAR" && key==="1234"){
+      document.getElementById("admin-panel").style.display="block";
+    } else {
+      alert("Wrong credentials!");
+    }
+  }
+
+  function addProduct() {
+    let img = document.getElementById("admin-img").value;
+    let name = document.getElementById("admin-name").value;
+    let price = parseInt(document.getElementById("admin-price").value);
+    let stock = parseInt(document.getElementById("admin-stock").value);
+    let cat = document.getElementById("admin-cat").value;
+
+    products.push({img,name,price,stock,category:cat});
+    renderProducts(products);
+  }
+
+  // Cart
+  function addToCart(index, price) {
+    let product = products[index];
+    if(product.stock <= 0) {
+      alert("Out of stock!");
+      return;
+    }
+    cart.push({name: product.name, price});
+    product.stock--;
+    updateCart();
+    renderProducts(products);
+  }
+
+  function updateCart() {
+    document.getElementById("cart-count").innerText = cart.length;
+  }
+
+  function toggleCart() {
+    document.getElementById("cart-panel").classList.toggle("active");
+    showCartItems();
+  }
+
+  function showCartItems() {
+    let itemsDiv = document.getElementById("cart-items");
+    let total = 0;
+    itemsDiv.innerHTML = "";
+    cart.forEach((c) => {
+      total += c.price;
+      itemsDiv.innerHTML += `<div class="cart-item"><span>${c.name}</span> <span>₹${c.price}</span></div>`;
+    });
+    document.getElementById("cart-total").innerText = total;
+  }
+
+  function checkout() {
+    let total = document.getElementById("cart-total").innerText;
+    let msg = `Hello, I want to place an order. Total Amount: ₹${total}. Cash on Delivery.`;
+    window.open(`https://wa.me/919032302088?text=${encodeURIComponent(msg)}`);
+  }
+
+  renderProducts(products);
+</script>
+</body>
+</html>
